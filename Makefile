@@ -47,15 +47,17 @@ PRE = $(patsubst $(SRC_DIR)/%.c, $(PRE_DIR)/%.i, $(SRC))
 
 DOTFILES = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.c.callgraph.dot, $(SRC))
 CALLGRAPHS = $(patsubst $(OBJ_DIR)/%.c.callgraph.dot, $(CALLGRAPH_DIR)/%.png, $(DOTFILES))
-
 GCDAFILES = $(patsubst $(OBJ_DIR)/%.cov.o, $(OBJ_DIR)/%.cov.gcda, $(OBJ))
 
-all: prep asm obj callgraphs bin
+MISRA_REPORT_FILE = $(BUILD_DIR)/misra_report.txt
+
+all: prep asm obj callgraphs misra bin
 
 asm: $(ASM)
 prep: $(PRE)
-obj: $(OBJ)
+obj: $(OBJ) $(OBJ_COVERAGE) $(OBJ_PROFILING)
 callgraphs: $(CALLGRAPHS)
+misra: $(MISRA_REPORT_FILE)
 bin: $(NAME) $(NAME_COVERAGE) $(NAME_PROFILING)
 
 $(NAME): $(OBJ) 
@@ -96,5 +98,8 @@ $(CALLGRAPH_DIR)/%.png: $(OBJ_DIR)/%.c.callgraph.dot
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -f $(NAME) $(NAME_COVERAGE) $(NAME_PROFILING)
+
+$(MISRA_REPORT_FILE): $(SRC) $(wildcard $(INC_DIR)/*.h)
+	cppcheck --template="{file}:{line}:{column}: {id}:{severity}:{message}" --output-file=$@ --addon=misra/misra.json $< 
 
 re: clean all
