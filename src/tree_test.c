@@ -1,6 +1,12 @@
 #include "tree.h"
 #include <stdio.h>
+
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <setjmp.h>
 #include <stdint.h>
+#include "cmocka.h"
 
 #define debug_print_tree(str, t) do { \
 	fprintf(stderr, "%s:%d %s: t=%p t.next=%p t.prev=%p, t.nprev=%p t.nnext=%p\n", __func__, __LINE__, \
@@ -13,43 +19,12 @@
 					); \
 } while (0)
 
-#define ASSERT_FALSE(expr) do {\
-	if (!!(expr)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
-
-#define ASSERT_TRUE(expr) do {\
-	if (!(expr)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
-
-#define ASSERT_FALSE_MSG(expr, msg) do {\
-	if (!!(expr)) { fprintf(stderr, "[E] %s: %d %s\n", __func__, __LINE__, msg); }\
-	else {fprintf(stdout, "[D] %s: %d %s\n", __func__, __LINE__, msg);}\
-} while (0)
-
-#define ASSERT_TRUE_MSG(expr, msg) do {\
-	if (!(expr)) { fprintf(stderr, "[E] %s: %d %s\n", __func__, __LINE__, msg); }\
-	else {fprintf(stdout, "[D] %s: %d %s\n", __func__, __LINE__, msg);}\
-} while (0)
-
-#define ASSERT_PTR_EQ(p1, p2) do {\
-	if ((p1) != (p2)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
-
-#define ASSERT_EQ(p1, p2) do {\
-	if ((p1) != (p2)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
-
-
 struct tree_test_struct {
 	int data;
 	struct tree_head tree;
 };
 
-static void tree_test_tree_foreach_x_entry(void)
+static void tree_test_tree_foreach_x_entry(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -63,13 +38,13 @@ static void tree_test_tree_foreach_x_entry(void)
 	i = 0;
 
 	tree_foreach_x_entry(cur, &tree, tree) {
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
-static void tree_test_tree_foreach_x_entry_continue(void)
+static void tree_test_tree_foreach_x_entry_continue(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -85,13 +60,13 @@ static void tree_test_tree_foreach_x_entry_continue(void)
 	cur = &entries[2];
 
 	tree_foreach_x_entry_continue(cur, &tree, tree) {
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
-static void tree_test_tree_foreach_x_entry_rev(void)
+static void tree_test_tree_foreach_x_entry_rev(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -106,12 +81,12 @@ static void tree_test_tree_foreach_x_entry_rev(void)
 
 	tree_foreach_x_entry_rev(cur, &tree, tree) {
 		i--;
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 	}
 
-	ASSERT_EQ(i, 0);
+	assert_int_equal(i, 0);
 }
-static void tree_test_tree_foreach_x_entry_continue_rev(void)
+static void tree_test_tree_foreach_x_entry_continue_rev(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -128,12 +103,12 @@ static void tree_test_tree_foreach_x_entry_continue_rev(void)
 
 	tree_foreach_x_entry_continue_rev(cur, &tree, tree) {
 		i--;
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 	}
 
-	ASSERT_EQ(i, 0);
+	assert_int_equal(i, 0);
 }
-static void tree_test_tree_get_x_next_entry(void)
+static void tree_test_tree_get_x_next_entry(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -149,9 +124,9 @@ static void tree_test_tree_get_x_next_entry(void)
 	cur = &entries[2];
 	struct tree_test_struct *ptr;
 	ptr = tree_entry_x_next_entry(cur, tree);
-	ASSERT_EQ(ptr, &entries[3]);
+	assert_int_equal(ptr, &entries[3]);
 }
-static void tree_test_tree_get_x_prev_entry(void)
+static void tree_test_tree_get_x_prev_entry(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -165,10 +140,10 @@ static void tree_test_tree_get_x_prev_entry(void)
 	cur = &entries[2];
 	struct tree_test_struct *ptr;
 	ptr = tree_entry_x_prev_entry(cur, tree);
-	ASSERT_EQ(ptr, &entries[1]);
+	assert_int_equal(ptr, &entries[1]);
 }
 
-static void tree_test_tree_foreach_y_entry(void)
+static void tree_test_tree_foreach_y_entry(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -182,13 +157,13 @@ static void tree_test_tree_foreach_y_entry(void)
 	i = 0;
 
 	tree_foreach_y_entry(cur, &tree, tree) {
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
-static void tree_test_tree_foreach_y_entry_continue(void)
+static void tree_test_tree_foreach_y_entry_continue(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -204,13 +179,13 @@ static void tree_test_tree_foreach_y_entry_continue(void)
 	cur = &entries[2];
 
 	tree_foreach_y_entry_continue(cur, &tree, tree) {
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
-static void tree_test_tree_foreach_y_entry_rev(void)
+static void tree_test_tree_foreach_y_entry_rev(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -225,12 +200,12 @@ static void tree_test_tree_foreach_y_entry_rev(void)
 
 	tree_foreach_y_entry_rev(cur, &tree, tree) {
 		i--;
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 	}
 
-	ASSERT_EQ(i, 0);
+	assert_int_equal(i, 0);
 }
-static void tree_test_tree_foreach_y_entry_continue_rev(void)
+static void tree_test_tree_foreach_y_entry_continue_rev(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -247,12 +222,12 @@ static void tree_test_tree_foreach_y_entry_continue_rev(void)
 
 	tree_foreach_y_entry_continue_rev(cur, &tree, tree) {
 		i--;
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 	}
 
-	ASSERT_EQ(i, 0);
+	assert_int_equal(i, 0);
 }
-static void tree_test_tree_get_y_next_entry(void)
+static void tree_test_tree_get_y_next_entry(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -268,9 +243,9 @@ static void tree_test_tree_get_y_next_entry(void)
 	cur = &entries[2];
 	struct tree_test_struct *ptr;
 	ptr = tree_entry_y_next_entry(cur, tree);
-	ASSERT_EQ(ptr, &entries[3]);
+	assert_int_equal(ptr, &entries[3]);
 }
-static void tree_test_tree_get_y_prev_entry(void)
+static void tree_test_tree_get_y_prev_entry(void **state)
 {
 	struct tree_test_struct entries[5], *cur;
 	TREE_HEAD(tree);
@@ -284,7 +259,7 @@ static void tree_test_tree_get_y_prev_entry(void)
 	cur = &entries[2];
 	struct tree_test_struct *ptr;
 	ptr = tree_entry_y_prev_entry(cur, tree);
-	ASSERT_EQ(ptr, &entries[1]);
+	assert_int_equal(ptr, &entries[1]);
 }
 
 struct old_tree_test_struct
@@ -305,29 +280,31 @@ void tree_test_init()
 	TREE_HEAD(l4);
 
 	INIT_TREE_HEAD(&l3);
-	ASSERT_TRUE(tree_empty(&l1));
-	ASSERT_TRUE(tree_empty(&l2));
-	ASSERT_TRUE(tree_empty(&l3));
-	ASSERT_TRUE(tree_empty(&l4));
+	assert_true(tree_empty(&l1));
+	assert_true(tree_empty(&l2));
+	assert_true(tree_empty(&l3));
+	assert_true(tree_empty(&l4));
 }
 
 void run_tree_test()
 {
-	tree_test_init();
-
-	tree_test_tree_foreach_x_entry();
-	tree_test_tree_foreach_x_entry_continue();
-	tree_test_tree_foreach_x_entry_rev();
-	tree_test_tree_foreach_x_entry_continue_rev();
-	tree_test_tree_get_x_next_entry();
-	tree_test_tree_get_x_prev_entry();
-
-	tree_test_tree_foreach_y_entry();
-	tree_test_tree_foreach_y_entry_continue();
-	tree_test_tree_foreach_y_entry_rev();
-	tree_test_tree_foreach_y_entry_continue_rev();
-	tree_test_tree_get_y_next_entry();
-	tree_test_tree_get_y_prev_entry();
+    const struct CMUnitTest tree_tests[] = {
+		cmocka_unit_test(tree_test_init),
+		cmocka_unit_test(tree_test_tree_foreach_x_entry),
+		cmocka_unit_test(tree_test_tree_foreach_x_entry_continue),
+		cmocka_unit_test(tree_test_tree_foreach_x_entry_rev),
+		cmocka_unit_test(tree_test_tree_foreach_x_entry_continue_rev),
+		cmocka_unit_test(tree_test_tree_get_x_next_entry),
+		cmocka_unit_test(tree_test_tree_get_x_prev_entry),
+		cmocka_unit_test(tree_test_tree_foreach_y_entry),
+		cmocka_unit_test(tree_test_tree_foreach_y_entry_continue),
+		cmocka_unit_test(tree_test_tree_foreach_y_entry_rev),
+		cmocka_unit_test(tree_test_tree_foreach_y_entry_continue_rev),
+		cmocka_unit_test(tree_test_tree_get_y_next_entry),
+		cmocka_unit_test(tree_test_tree_get_y_prev_entry)
+	};
+	cmocka_set_message_output(CM_OUTPUT_XML);
+    return cmocka_run_group_tests(tree_tests, NULL, NULL);
 }
 
 
@@ -386,6 +363,6 @@ void old_run_tree_test()
 		}
 	}
 
-	ASSERT_EQ(i, 255);
+	assert_int_equal(i, 255);
 }
 */

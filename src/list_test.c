@@ -1,38 +1,15 @@
 #include <stdio.h>
-#include <stdint.h>
 #include "list.h"
 
-#define ASSERT_FALSE(expr) do {\
-	if (!!(expr)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <setjmp.h>
+#include <stdint.h>
+#include "cmocka.h"
 
-#define ASSERT_TRUE(expr) do {\
-	if (!(expr)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
 
-#define ASSERT_FALSE_MSG(expr, msg) do {\
-	if (!!(expr)) { fprintf(stderr, "[E] %s: %d %s\n", __func__, __LINE__, msg); }\
-	else {fprintf(stdout, "[D] %s: %d %s\n", __func__, __LINE__, msg);}\
-} while (0)
-
-#define ASSERT_TRUE_MSG(expr, msg) do {\
-	if (!(expr)) { fprintf(stderr, "[E] %s: %d %s\n", __func__, __LINE__, msg); }\
-	else {fprintf(stdout, "[D] %s: %d %s\n", __func__, __LINE__, msg);}\
-} while (0)
-
-#define ASSERT_PTR_EQ(p1, p2) do {\
-	if ((p1) != (p2)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
-
-#define ASSERT_EQ(p1, p2) do {\
-	if ((p1) != (p2)) { fprintf(stderr, "[E] %s: %d\n", __func__, __LINE__); }\
-	else {fprintf(stdout, "[D] %s: %d\n", __func__, __LINE__);}\
-} while (0)
-
-static void list_test_list_rotate_left(void)
+static void list_test_list_rotate_left(void **state)
 {
 	struct list_head a, b;
 	LIST_HEAD(list);
@@ -44,12 +21,12 @@ static void list_test_list_rotate_left(void)
 	list_rotate_left(&list);
 	/* after: [list] -> b -> a */
 
-	ASSERT_PTR_EQ(list.next, &b);
-	ASSERT_PTR_EQ(b.prev, &list);
-	ASSERT_PTR_EQ(b.next, &a);
+	assert_ptr_equal(list.next, &b);
+	assert_ptr_equal(b.prev, &list);
+	assert_ptr_equal(b.next, &a);
 }
 
-static void list_test_list_rotate_to_front(void)
+static void list_test_list_rotate_to_front(void **state)
 {
 	struct list_head a, b, c, d;
 	struct list_head *list_values[] = { &c, &d, &a, &b };
@@ -67,32 +44,32 @@ static void list_test_list_rotate_to_front(void)
 	/* after: [list] -> c -> d -> a -> b */
 
 	list_for_each(ptr, &list) {
-		ASSERT_PTR_EQ(ptr, list_values[i]);
+		assert_ptr_equal(ptr, list_values[i]);
 		i++;
 	}
-	ASSERT_EQ(i, 4);
+	assert_int_equal(i, 4);
 }
 
-static void list_test_list_is_singular(void)
+static void list_test_list_is_singular(void **state)
 {
 	struct list_head a, b;
 	LIST_HEAD(list);
 
 	/* [list] empty */
-	ASSERT_FALSE(list_is_singular(&list));
+	assert_false(list_is_singular(&list));
 
 	list_add_tail(&a, &list);
 
 	/* [list] -> a */
-	ASSERT_TRUE(list_is_singular(&list));
+	assert_true(list_is_singular(&list));
 
 	list_add_tail(&b, &list);
 
 	/* [list] -> a -> b */
-	ASSERT_FALSE(list_is_singular(&list));
+	assert_false(list_is_singular(&list));
 }
 
-static void list_test_list_cut_position(void)
+static void list_test_list_cut_position(void **state)
 {
 	struct list_head entries[3], *cur;
 	LIST_HEAD(list1);
@@ -108,19 +85,19 @@ static void list_test_list_cut_position(void)
 	/* after: [list2] -> entries[0] -> entries[1], [list1] -> entries[2] */
 
 	list_for_each(cur, &list2) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 
-	ASSERT_EQ(i, 2);
+	assert_int_equal(i, 2);
 
 	list_for_each(cur, &list1) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 }
 
-static void list_test_list_cut_before(void)
+static void list_test_list_cut_before(void **state)
 {
 	struct list_head entries[3], *cur;
 	LIST_HEAD(list1);
@@ -136,19 +113,19 @@ static void list_test_list_cut_before(void)
 	/* after: [list2] -> entries[0], [list1] -> entries[1] -> entries[2] */
 
 	list_for_each(cur, &list2) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 
-	ASSERT_EQ(i, 1);
+	assert_int_equal(i, 1);
 
 	list_for_each(cur, &list1) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 }
 
-static void list_test_list_splice(void)
+static void list_test_list_splice(void **state)
 {
 	struct list_head entries[5], *cur;
 	LIST_HEAD(list1);
@@ -166,14 +143,14 @@ static void list_test_list_splice(void)
 	/* after: [list1]->e[0]->e[1]->e[2]->e[3]->e[4], [list2] uninit */
 
 	list_for_each(cur, &list1) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
 
-static void list_test_list_splice_tail(void)
+static void list_test_list_splice_tail(void **state)
 {
 	struct list_head entries[5], *cur;
 	LIST_HEAD(list1);
@@ -191,14 +168,14 @@ static void list_test_list_splice_tail(void)
 	/* after: [list1]->e[0]->e[1]->e[2]->e[3]->e[4], [list2] uninit */
 
 	list_for_each(cur, &list1) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
 
-static void list_test_list_splice_init(void)
+static void list_test_list_splice_init(void **state)
 {
 	struct list_head entries[5], *cur;
 	LIST_HEAD(list1);
@@ -216,16 +193,16 @@ static void list_test_list_splice_init(void)
 	/* after: [list1]->e[0]->e[1]->e[2]->e[3]->e[4], [list2] empty */
 
 	list_for_each(cur, &list1) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 
-	ASSERT_TRUE(list_empty_careful(&list2));
+	assert_true(list_empty_careful(&list2));
 }
 
-static void list_test_list_splice_tail_init(void)
+static void list_test_list_splice_tail_init(void **state)
 {
 	struct list_head entries[5], *cur;
 	LIST_HEAD(list1);
@@ -243,16 +220,16 @@ static void list_test_list_splice_tail_init(void)
 	/* after: [list1]->e[0]->e[1]->e[2]->e[3]->e[4], [list2] empty */
 
 	list_for_each(cur, &list1) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 
-	ASSERT_TRUE(list_empty_careful(&list2));
+	assert_true(list_empty_careful(&list2));
 }
 
-static void list_test_list_del(void)
+static void list_test_list_del(void **state)
 {
 	struct list_head a, b;
 	LIST_HEAD(list);
@@ -264,11 +241,11 @@ static void list_test_list_del(void)
 	list_del(&a);
 
 	/* now: [list] -> b */
-	ASSERT_PTR_EQ(list.next, &b);
-	ASSERT_PTR_EQ(b.prev, &list);
+	assert_ptr_equal(list.next, &b);
+	assert_ptr_equal(b.prev, &list);
 }
 
-static void list_test_list_replace(void)
+static void list_test_list_replace(void **state)
 {
 	struct list_head a_old, a_new, b;
 	LIST_HEAD(list);
@@ -280,11 +257,11 @@ static void list_test_list_replace(void)
 	list_replace(&a_old, &a_new);
 
 	/* now: [list] -> a_new -> b */
-	ASSERT_PTR_EQ(list.next, &a_new);
-	ASSERT_PTR_EQ(b.prev, &a_new);
+	assert_ptr_equal(list.next, &a_new);
+	assert_ptr_equal(b.prev, &a_new);
 }
 
-static void list_test_list_move(void)
+static void list_test_list_move(void **state)
 {
 	struct list_head a, b;
 	LIST_HEAD(list1);
@@ -297,13 +274,13 @@ static void list_test_list_move(void)
 	list_move(&a, &list2);
 	/* after: [list1] empty, [list2] -> a -> b */
 
-	ASSERT_TRUE(list_empty(&list1));
+	assert_true(list_empty(&list1));
 
-	ASSERT_PTR_EQ(&a, list2.next);
-	ASSERT_PTR_EQ(&b, a.next);
+	assert_ptr_equal(&a, list2.next);
+	assert_ptr_equal(&b, a.next);
 }
 
-static void list_test_list_move_tail(void)
+static void list_test_list_move_tail(void **state)
 {
 	struct list_head a, b;
 	LIST_HEAD(list1);
@@ -316,13 +293,13 @@ static void list_test_list_move_tail(void)
 	list_move_tail(&a, &list2);
 	/* after: [list1] empty, [list2] -> b -> a */
 
-	ASSERT_TRUE(list_empty(&list1));
+	assert_true(list_empty(&list1));
 
-	ASSERT_PTR_EQ(&b, list2.next);
-	ASSERT_PTR_EQ(&a, b.next);
+	assert_ptr_equal(&b, list2.next);
+	assert_ptr_equal(&a, b.next);
 }
 
-static void list_test_list_bulk_move_tail(void)
+static void list_test_list_bulk_move_tail(void **state)
 {
 	struct list_head a, b, c, d, x, y;
 	struct list_head *list1_values[] = { &x, &b, &c, &y };
@@ -345,19 +322,19 @@ static void list_test_list_bulk_move_tail(void)
 	/* after: [list1] -> x -> b -> c -> y, [list2] -> a -> d */
 
 	list_for_each(ptr, &list1) {
-		ASSERT_PTR_EQ(ptr, list1_values[i]);
+		assert_ptr_equal(ptr, list1_values[i]);
 		i++;
 	}
-	ASSERT_EQ(i, 4);
+	assert_int_equal(i, 4);
 	i = 0;
 	list_for_each(ptr, &list2) {
-		ASSERT_PTR_EQ(ptr, list2_values[i]);
+		assert_ptr_equal(ptr, list2_values[i]);
 		i++;
 	}
-	ASSERT_EQ(i, 2);
+	assert_int_equal(i, 2);
 }
 
-static void list_test_list_swap(void)
+static void list_test_list_swap(void **state)
 {
 	struct list_head a, b;
 	LIST_HEAD(list);
@@ -369,14 +346,14 @@ static void list_test_list_swap(void)
 	list_swap(&a, &b);
 
 	/* after: [list] -> b -> a */
-	ASSERT_PTR_EQ(&b, list.next);
-	ASSERT_PTR_EQ(&a, list.prev);
+	assert_ptr_equal(&b, list.next);
+	assert_ptr_equal(&a, list.prev);
 
-	ASSERT_PTR_EQ(&a, b.next);
-	ASSERT_PTR_EQ(&list, b.prev);
+	assert_ptr_equal(&a, b.next);
+	assert_ptr_equal(&list, b.prev);
 
-	ASSERT_PTR_EQ(&list, a.next);
-	ASSERT_PTR_EQ(&b, a.prev);
+	assert_ptr_equal(&list, a.next);
+	assert_ptr_equal(&b, a.prev);
 }
 
 static void list_test_list_add_tail()
@@ -388,12 +365,12 @@ static void list_test_list_add_tail()
 	list_add_tail(&b, &list);
 
 	/* should be [list] -> a -> b */
-	ASSERT_PTR_EQ(list.next, &a);
-	ASSERT_PTR_EQ(a.prev, &list);
-	ASSERT_PTR_EQ(a.next, &b);
+	assert_ptr_equal(list.next, &a);
+	assert_ptr_equal(a.prev, &list);
+	assert_ptr_equal(a.next, &b);
 }
 
-static void list_test_list_add(void)
+static void list_test_list_add(void **state)
 {
 	struct list_head a, b;
 	LIST_HEAD(list);
@@ -402,9 +379,9 @@ static void list_test_list_add(void)
 	list_add(&b, &list);
 
 	/* should be [list] -> b -> a */
-	ASSERT_PTR_EQ(list.next, &b);
-	ASSERT_PTR_EQ(b.prev, &list);
-	ASSERT_PTR_EQ(b.next, &a);
+	assert_ptr_equal(list.next, &b);
+	assert_ptr_equal(b.prev, &list);
+	assert_ptr_equal(b.next, &a);
 }
 
 static void list_test_list_init()
@@ -415,10 +392,10 @@ static void list_test_list_init()
 	LIST_HEAD(l4);
 
 	INIT_LIST_HEAD(&l3);
-	ASSERT_TRUE(list_empty(&l1));
-	ASSERT_TRUE(list_empty(&l2));
-	ASSERT_TRUE(list_empty(&l3));
-	ASSERT_TRUE(list_empty(&l4));
+	assert_true(list_empty(&l1));
+	assert_true(list_empty(&l2));
+	assert_true(list_empty(&l3));
+	assert_true(list_empty(&l4));
 }
 
 struct list_test_struct {
@@ -426,7 +403,7 @@ struct list_test_struct {
 	struct list_head list;
 };
 
-static void list_test_list_entry_is_head(void)
+static void list_test_list_entry_is_head(void **state)
 {
 	struct list_test_struct test_struct1, test_struct2, test_struct3;
 
@@ -435,18 +412,15 @@ static void list_test_list_entry_is_head(void)
 
 	list_add_tail(&test_struct2.list, &test_struct1.list);
 
-	ASSERT_TRUE_MSG(
-		list_entry_is_head((&test_struct1), &test_struct1.list, list),
-		"Head element of same list");
-	ASSERT_FALSE_MSG(
-		list_entry_is_head((&test_struct2), &test_struct1.list, list),
-		"Non-head element of same list");
-	ASSERT_FALSE_MSG(
-		list_entry_is_head((&test_struct3), &test_struct1.list, list),
-		"Head element of different list");
+	assert_true(
+		list_entry_is_head((&test_struct1), &test_struct1.list, list));
+	assert_false(
+		list_entry_is_head((&test_struct2), &test_struct1.list, list));
+	assert_false(
+		list_entry_is_head((&test_struct3), &test_struct1.list, list));
 }
 
-static void list_test_list_first_entry(void)
+static void list_test_list_first_entry(void **state)
 {
 	struct list_test_struct test_struct1, test_struct2;
 	LIST_HEAD(list);
@@ -455,11 +429,11 @@ static void list_test_list_first_entry(void)
 	list_add_tail(&test_struct2.list, &list);
 
 
-	ASSERT_PTR_EQ(&test_struct1, list_first_entry(&list,
+	assert_ptr_equal(&test_struct1, list_first_entry(&list,
 				struct list_test_struct, list));
 }
 
-static void list_test_list_last_entry(void)
+static void list_test_list_last_entry(void **state)
 {
 	struct list_test_struct test_struct1, test_struct2;
 	LIST_HEAD(list);
@@ -468,27 +442,27 @@ static void list_test_list_last_entry(void)
 	list_add_tail(&test_struct2.list, &list);
 
 
-	ASSERT_PTR_EQ(&test_struct2, list_last_entry(&list,
+	assert_ptr_equal(&test_struct2, list_last_entry(&list,
 				struct list_test_struct, list));
 }
 
-static void list_test_list_first_entry_or_null(void)
+static void list_test_list_first_entry_or_null(void **state)
 {
 	struct list_test_struct test_struct1, test_struct2;
 	LIST_HEAD(list);
 
-	ASSERT_FALSE(list_first_entry_or_null(&list,
+	assert_false(list_first_entry_or_null(&list,
 				struct list_test_struct, list));
 
 	list_add_tail(&test_struct1.list, &list);
 	list_add_tail(&test_struct2.list, &list);
 
-	ASSERT_PTR_EQ(&test_struct1,
+	assert_ptr_equal(&test_struct1,
 			list_first_entry_or_null(&list,
 				struct list_test_struct, list));
 }
 
-static void list_test_list_next_entry(void)
+static void list_test_list_next_entry(void **state)
 {
 	struct list_test_struct test_struct1, test_struct2;
 	LIST_HEAD(list);
@@ -497,11 +471,11 @@ static void list_test_list_next_entry(void)
 	list_add_tail(&test_struct2.list, &list);
 
 
-	ASSERT_PTR_EQ(&test_struct2, list_next_entry(&test_struct1,
+	assert_ptr_equal(&test_struct2, list_next_entry(&test_struct1,
 				list));
 }
 
-static void list_test_list_prev_entry(void)
+static void list_test_list_prev_entry(void **state)
 {
 	struct list_test_struct test_struct1, test_struct2;
 	LIST_HEAD(list);
@@ -510,11 +484,11 @@ static void list_test_list_prev_entry(void)
 	list_add_tail(&test_struct2.list, &list);
 
 
-	ASSERT_PTR_EQ(&test_struct1, list_prev_entry(&test_struct2,
+	assert_ptr_equal(&test_struct1, list_prev_entry(&test_struct2,
 				list));
 }
 
-static void list_test_list_for_each(void)
+static void list_test_list_for_each(void **state)
 {
 	struct list_head entries[3], *cur;
 	LIST_HEAD(list);
@@ -525,14 +499,14 @@ static void list_test_list_for_each(void)
 	list_add_tail(&entries[2], &list);
 
 	list_for_each(cur, &list) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i++;
 	}
 
-	ASSERT_EQ(i, 3);
+	assert_int_equal(i, 3);
 }
 
-static void list_test_list_for_each_prev(void)
+static void list_test_list_for_each_prev(void **state)
 {
 	struct list_head entries[3], *cur;
 	LIST_HEAD(list);
@@ -543,14 +517,14 @@ static void list_test_list_for_each_prev(void)
 	list_add_tail(&entries[2], &list);
 
 	list_for_each_prev(cur, &list) {
-		ASSERT_PTR_EQ(cur, &entries[i]);
+		assert_ptr_equal(cur, &entries[i]);
 		i--;
 	}
 
-	ASSERT_EQ(i, -1);
+	assert_int_equal(i, -1);
 }
 
-static void list_test_list_for_each_entry(void)
+static void list_test_list_for_each_entry(void **state)
 {
 	struct list_test_struct entries[5], *cur;
 	LIST_HEAD(list);
@@ -564,14 +538,14 @@ static void list_test_list_for_each_entry(void)
 	i = 0;
 
 	list_for_each_entry(cur, &list, list) {
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
 
-static void list_test_list_for_each_entry_continue(void)
+static void list_test_list_for_each_entry_continue(void **state)
 {
 	struct list_test_struct entries[5], *cur;
 	LIST_HEAD(list);
@@ -586,14 +560,14 @@ static void list_test_list_for_each_entry_continue(void)
 
 	cur = &entries[1];
 	list_for_each_entry_continue(cur, &list, list) {
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 		i++;
 	}
 
-	ASSERT_EQ(i, 5);
+	assert_int_equal(i, 5);
 }
 
-static void list_test_list_for_each_entry_reverse(void)
+static void list_test_list_for_each_entry_reverse(void **state)
 {
 	struct list_test_struct entries[5], *cur;
 	LIST_HEAD(list);
@@ -607,11 +581,11 @@ static void list_test_list_for_each_entry_reverse(void)
 	i = 4;
 
 	list_for_each_entry_reverse(cur, &list, list) {
-		ASSERT_EQ(cur->data, i);
+		assert_int_equal(cur->data, i);
 		i--;
 	}
 
-	ASSERT_EQ(i, -1);
+	assert_int_equal(i, -1);
 }
 
 typedef struct user_s {
@@ -622,33 +596,37 @@ typedef struct user_s {
 
 void run_list_test()
 {
-	list_test_list_init();
-	list_test_list_add();
-	list_test_list_add_tail();
-	list_test_list_swap();
-	list_test_list_replace();
-	list_test_list_del();
-	list_test_list_move();
-	list_test_list_move_tail();
-	list_test_list_bulk_move_tail();
-	list_test_list_rotate_left();
-	list_test_list_rotate_to_front();
-	list_test_list_is_singular();
-	list_test_list_cut_position();
-	list_test_list_cut_before();
-	list_test_list_splice();
-	list_test_list_splice_tail();
-	list_test_list_splice_init();
-	list_test_list_splice_tail_init();
-	list_test_list_entry_is_head();
-	list_test_list_first_entry();
-	list_test_list_last_entry();
-	list_test_list_first_entry_or_null();
-	list_test_list_next_entry();
-	list_test_list_prev_entry();
-	list_test_list_for_each();
-	list_test_list_for_each_prev();
-	list_test_list_for_each_entry();
-	list_test_list_for_each_entry_reverse();
-	list_test_list_for_each_entry_continue();
+    const struct CMUnitTest list_tests[] = {
+		cmocka_unit_test(list_test_list_init),
+		cmocka_unit_test(list_test_list_add),
+		cmocka_unit_test(list_test_list_add_tail),
+		cmocka_unit_test(list_test_list_swap),
+		cmocka_unit_test(list_test_list_replace),
+		cmocka_unit_test(list_test_list_del),
+		cmocka_unit_test(list_test_list_move),
+		cmocka_unit_test(list_test_list_move_tail),
+		cmocka_unit_test(list_test_list_bulk_move_tail),
+		cmocka_unit_test(list_test_list_rotate_left),
+		cmocka_unit_test(list_test_list_rotate_to_front),
+		cmocka_unit_test(list_test_list_is_singular),
+		cmocka_unit_test(list_test_list_cut_position),
+		cmocka_unit_test(list_test_list_cut_before),
+		cmocka_unit_test(list_test_list_splice),
+		cmocka_unit_test(list_test_list_splice_tail),
+		cmocka_unit_test(list_test_list_splice_init),
+		cmocka_unit_test(list_test_list_splice_tail_init),
+		cmocka_unit_test(list_test_list_entry_is_head),
+		cmocka_unit_test(list_test_list_first_entry),
+		cmocka_unit_test(list_test_list_last_entry),
+		cmocka_unit_test(list_test_list_first_entry_or_null),
+		cmocka_unit_test(list_test_list_next_entry),
+		cmocka_unit_test(list_test_list_prev_entry),
+		cmocka_unit_test(list_test_list_for_each),
+		cmocka_unit_test(list_test_list_for_each_prev),
+		cmocka_unit_test(list_test_list_for_each_entry),
+		cmocka_unit_test(list_test_list_for_each_entry_reverse),
+		cmocka_unit_test(list_test_list_for_each_entry_continue),
+    };
+	cmocka_set_message_output(CM_OUTPUT_XML);
+    return cmocka_run_group_tests(list_tests, NULL, NULL);
 }

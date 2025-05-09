@@ -36,5 +36,9 @@ easily check if there is more error in CI and reject PR)
 ## Linter
 ## CMocka
 
-
-
+Test is run with CMocka, it output a JUnit xml on stdout.
+Cmocka is a submodule, so run :
+```
+git submodule update --init
+```
+When cloning repository.

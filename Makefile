@@ -8,6 +8,11 @@ CC := gcc
 
 CFLAGS := -Wall -Wextra -Werror -g3
 
+# CMocka require this
+CFLAGS += -DHAVE_SIGNAL_H
+CFLAGS += -Wno-unused-parameter
+CFLAGS += -Wno-return-type
+
 FANALYZER_FLAG =					\
 -fanalyzer							\
 -fdump-analyzer-supergraph			\
@@ -26,16 +31,18 @@ ASM_DIR = $(BUILD_DIR)/asm
 PRE_DIR = $(BUILD_DIR)/preprocessing
 CALLGRAPH_DIR = $(BUILD_DIR)/callgraph
 
-SRC := \
-	src/list_test.c \
-	src/tree_test.c \
-	src/main_test.c
+SRC := 						\
+	src/list_test.c			\
+	src/tree_test.c			\
+	src/main_test.c			\
+	cmocka/src/cmocka.c		\
 
 #	TODO LMA
 #	./src/node_test.c \
 
-INCDIR := inc/ \
-		  libft/
+INCDIR := inc/				\
+		  	libft/			\
+			cmocka/include	\
 
 IFLAGS 	= $(foreach D,$(INCDIR), -I$(D))
 
