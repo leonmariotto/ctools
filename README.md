@@ -24,6 +24,8 @@ Makefile use $(FPROFILE_FLAG)
 
 Makefile use $(FANALYZER_FLAG) which create .dot along with object.
 The .dot is then transformed with dot utility int a dedicated rule.
+TODO: pydot provide a lot of functionality to highlight informations, produce subgraph,
+and clean useless things. It may worth it to dev a script for that.
 
 ## Static Analysis
 ## MISRA checker

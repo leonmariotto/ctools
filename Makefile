@@ -53,7 +53,7 @@ ASM = $(patsubst $(SRC_DIR)/%.c, $(ASM_DIR)/%.S, $(SRC))
 PRE = $(patsubst $(SRC_DIR)/%.c, $(PRE_DIR)/%.i, $(SRC))
 
 DOTFILES = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.c.callgraph.dot, $(SRC))
-CALLGRAPHS = $(patsubst $(OBJ_DIR)/%.c.callgraph.dot, $(CALLGRAPH_DIR)/%.png, $(DOTFILES))
+CALLGRAPHS = $(patsubst $(OBJ_DIR)/%.c.callgraph.dot, $(CALLGRAPH_DIR)/%.svg, $(DOTFILES))
 GCDAFILES = $(patsubst $(OBJ_DIR)/%.cov.o, $(OBJ_DIR)/%.cov.gcda, $(OBJ))
 
 MISRA_REPORT_FILE = $(BUILD_DIR)/misra_report.txt
@@ -98,9 +98,9 @@ $(ASM_DIR)/%.S: $(SRC_DIR)/%.c
 
 $(DOTFILES): $(OBJ)
 
-$(CALLGRAPH_DIR)/%.png: $(OBJ_DIR)/%.c.callgraph.dot
+$(CALLGRAPH_DIR)/%.svg: $(OBJ_DIR)/%.c.callgraph.dot
 	@mkdir -p $(dir $@)
-	dot -Tpng -o $@ $<
+	dot -Tsvg -o $@ $<
 
 clean:
 	rm -rf $(BUILD_DIR)
