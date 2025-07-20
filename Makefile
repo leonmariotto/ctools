@@ -37,7 +37,7 @@ CALLGRAPH_DIR = $(BUILD_DIR)/callgraph
 
 SRC := 						\
 	src/list_test.c			\
-	src/simple_test.c			\
+	src/simple_test.c		\
 	src/tree_test.c			\
 	src/main_test.c			\
 	cmocka/src/cmocka.c		\
@@ -136,6 +136,6 @@ clean:
 	rm -f $(NAME) $(NAME_COVERAGE) $(NAME_PROFILING)
 
 $(MISRA_REPORT_FILE): $(SRC) $(wildcard $(INC_DIR)/*.h)
-	cppcheck --template="{file}:{line}:{column}: {id}:{severity}:{message}" --output-file=$@ --addon=misra/misra.json $< 
+	cppcheck --template="{file}:{line}:{column}: {id}:{severity}:{message}" --output-file=$@ --addon=misra/misra.json $(SRC) $(wildcard $(INC_DIR)/*.h)
 
 re: clean all
